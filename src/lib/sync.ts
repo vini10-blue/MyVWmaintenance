@@ -238,6 +238,20 @@ async function pullAttachments(userId: string) {
   }
 }
 
+const LAST_USER_KEY = "myvw_last_user";
+
+/** Wipe all locally-stored data (used when switching accounts). */
+export async function clearLocalData(): Promise<void> {
+  await Promise.all([
+    db.cars.clear(),
+    db.records.clear(),
+    db.fuelLogs.clear(),
+    db.attachments.clear(),
+    db.reminders.clear(),
+  ]);
+  localStorage.removeItem(DEL_KEY);
+}
+
 let syncing = false;
 
 /** Push everything local, then pull everything remote. Safe to call often. */
@@ -252,9 +266,18 @@ export async function fullSync(): Promise<void> {
   syncing = true;
   setStatus("syncing");
   try {
+    // If a *different* account was last active on this device, drop the local
+    // data first so one user's records can never be pushed into another user's
+    // cloud account (or shown to them). A first-ever login keeps any data the
+    // user entered before signing in, so it gets uploaded to their account.
+    const lastUser = localStorage.getItem(LAST_USER_KEY);
+    if (lastUser && lastUser !== userId) {
+      await clearLocalData();
+    }
     await flushDeletions(userId);
     await pushAllLocal(userId);
     await pullAll(userId);
+    localStorage.setItem(LAST_USER_KEY, userId);
     lastSyncAt = new Date().toISOString();
     setStatus("idle");
   } catch {

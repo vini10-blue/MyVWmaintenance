@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { cloudEnabled, supabase } from "../lib/supabase";
+import { fullSync } from "../lib/sync";
 
 interface AuthState {
   /** Still determining whether there is a session. */
@@ -56,7 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return error ? { error: error.message } : {};
     },
     async signOut() {
-      if (supabase) await supabase.auth.signOut();
+      if (supabase) {
+        // Make sure any unsynced local changes reach the cloud before the
+        // session ends, so nothing is lost on sign-out.
+        try {
+          await fullSync();
+        } catch {
+          /* ignore — sign out anyway */
+        }
+        await supabase.auth.signOut();
+      }
     },
   };
 
