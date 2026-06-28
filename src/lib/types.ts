@@ -102,6 +102,7 @@ export const SERVICE_CATEGORY_LABELS: Record<ServiceCategory, string> = {
 
 export interface PartUsed {
   name: string;
+  brand?: string;
   partNumber?: string;
   cost?: number;
 }

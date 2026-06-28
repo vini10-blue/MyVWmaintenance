@@ -66,6 +66,7 @@ export function History() {
               <div className="chips" style={{ marginTop: 8 }}>
                 {r.parts.map((p, i) => (
                   <span className="chip" key={i}>
+                    {p.brand ? `${p.brand} ` : ""}
                     {p.name}
                     {p.partNumber ? ` (${p.partNumber})` : ""}
                   </span>
