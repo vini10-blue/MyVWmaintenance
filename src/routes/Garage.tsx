@@ -76,9 +76,18 @@ export function Garage() {
     <Layout
       title="My Garage"
       action={
-        <button className="btn btn--accent btn--sm" onClick={() => navigate("/car/new")}>
-          + Car
-        </button>
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            className="btn btn--sm"
+            aria-label="Account and sync"
+            onClick={() => navigate("/account")}
+          >
+            👤
+          </button>
+          <button className="btn btn--accent btn--sm" onClick={() => navigate("/car/new")}>
+            + Car
+          </button>
+        </div>
       }
     >
       {cars && cars.length === 0 && (
