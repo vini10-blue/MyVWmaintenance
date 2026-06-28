@@ -17,6 +17,8 @@ interface AuthState {
   session: Session | null;
   user: User | null;
   signInWithEmail: (email: string) => Promise<{ error?: string }>;
+  /** Finish sign-in by entering the 6-digit code from the email. */
+  verifyEmailOtp: (email: string, token: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -48,11 +50,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     async signInWithEmail(email: string) {
       if (!supabase) return { error: "Cloud is not configured." };
-      // Magic-link / OTP sign-in. Redirect back to wherever the app is hosted.
+      // Send a one-time sign-in email. It contains BOTH a magic link and a
+      // 6-digit code, so the user can either tap the link or — more reliably on
+      // mobile, where the link often opens in a different browser and fails —
+      // type the code straight into this tab (see verifyEmailOtp).
       const emailRedirectTo = window.location.origin + import.meta.env.BASE_URL;
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo },
+      });
+      return error ? { error: error.message } : {};
+    },
+    async verifyEmailOtp(email: string, token: string) {
+      if (!supabase) return { error: "Cloud is not configured." };
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: token.trim(),
+        type: "email",
       });
       return error ? { error: error.message } : {};
     },
