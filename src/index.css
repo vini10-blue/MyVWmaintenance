@@ -154,6 +154,10 @@ a {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+/* Grid/flex children must be allowed to shrink, or inputs blow out the row. */
+.grid2 > * {
+  min-width: 0;
+}
 .muted {
   color: var(--muted);
 }
@@ -175,26 +179,54 @@ a {
   justify-content: center;
   gap: 6px;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--ink);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 15px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.05s ease;
+}
+.btn:hover {
+  background: #efeadf;
+  border-color: #d6cfbf;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(11, 61, 46, 0.18);
 }
 .btn--primary {
   background: var(--brand);
   border-color: var(--brand);
   color: var(--brand-ink);
 }
+.btn--primary:hover {
+  background: #0e4d39;
+  border-color: #0e4d39;
+}
 .btn--accent {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
 }
+.btn--accent:hover {
+  background: #b34a35;
+  border-color: #b34a35;
+}
 .btn--danger {
   color: var(--overdue);
+  border-color: var(--overdue);
+  background: var(--surface);
+}
+.btn--danger:hover {
+  background: #fbe6e3;
   border-color: var(--overdue);
 }
 .btn--block {
@@ -203,6 +235,14 @@ a {
 .btn--sm {
   padding: 6px 10px;
   font-size: 13px;
+}
+/* Square icon-only button (e.g. remove a row). */
+.btn--icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 16px;
 }
 .btn:disabled {
   opacity: 0.55;
@@ -215,6 +255,7 @@ a {
   flex-direction: column;
   gap: 5px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 .field label {
   font-size: 13px;
@@ -225,6 +266,7 @@ a {
 .field select,
 .field textarea {
   font: inherit;
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -335,6 +377,12 @@ a {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 3px 9px;
+}
+/* A single "part used" block inside the parts card. */
+.part-item + .part-item {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 .scan-banner {
   background: var(--surface-2);

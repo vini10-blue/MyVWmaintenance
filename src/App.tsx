@@ -11,10 +11,11 @@ import { FuelLogPage } from "./routes/FuelLog";
 import { Reminders } from "./routes/Reminders";
 import { Reports } from "./routes/Reports";
 import { SignIn } from "./routes/SignIn";
+import { UpdatePassword } from "./routes/UpdatePassword";
 import { Account } from "./routes/Account";
 
 export default function App() {
-  const { loading, cloudEnabled, user } = useAuth();
+  const { loading, cloudEnabled, user, recovering } = useAuth();
 
   if (loading) {
     return (
@@ -26,6 +27,12 @@ export default function App() {
         </main>
       </div>
     );
+  }
+
+  // Following a password-reset link: let the user set a new password before
+  // they reach the app (even though the recovery session makes them "signed in").
+  if (cloudEnabled && recovering) {
+    return <UpdatePassword />;
   }
 
   // When a cloud backend is configured, require sign-in so data is backed up.

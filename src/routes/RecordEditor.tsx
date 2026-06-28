@@ -37,6 +37,32 @@ export function RecordEditor() {
   const [scanMsg, setScanMsg] = useState<string>();
   const [saving, setSaving] = useState(false);
 
+  // Suggestions gathered from previous records so common entries can be picked
+  // from a dropdown instead of retyped (the fields stay free-text/editable).
+  const [titleOptions, setTitleOptions] = useState<string[]>([]);
+  const [partNameOptions, setPartNameOptions] = useState<string[]>([]);
+  const [brandOptions, setBrandOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    db.records.toArray().then((rows) => {
+      const titles = new Set<string>();
+      const partNames = new Set<string>();
+      const brands = new Set<string>();
+      for (const r of rows) {
+        if (r.title?.trim()) titles.add(r.title.trim());
+        for (const p of r.parts ?? []) {
+          if (p.name?.trim()) partNames.add(p.name.trim());
+          if (p.brand?.trim()) brands.add(p.brand.trim());
+        }
+      }
+      const sorted = (s: Set<string>) =>
+        Array.from(s).sort((a, b) => a.localeCompare(b));
+      setTitleOptions(sorted(titles));
+      setPartNameOptions(sorted(partNames));
+      setBrandOptions(sorted(brands));
+    });
+  }, []);
+
   // Load car (for defaults) and, in edit mode, the existing record.
   useEffect(() => {
     repo.cars.get(id).then((c) => {
@@ -179,6 +205,23 @@ export function RecordEditor() {
 
   return (
     <Layout title={isEdit ? "Edit record" : "Log service"} back>
+      {/* Shared suggestion lists (fields stay editable; these only offer picks). */}
+      <datalist id="title-options">
+        {titleOptions.map((t) => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
+      <datalist id="part-name-options">
+        {partNameOptions.map((t) => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
+      <datalist id="part-brand-options">
+        {brandOptions.map((t) => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
+
       <div className="card">
         {/* Receipt scan */}
         <div className="scan-banner">
@@ -210,7 +253,12 @@ export function RecordEditor() {
 
         <div className="field" style={{ marginTop: 12 }}>
           <label>What was done</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Oil change" />
+          <input
+            list="title-options"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Oil change"
+          />
         </div>
 
         <div className="grid2">
@@ -281,18 +329,34 @@ export function RecordEditor() {
       <div className="section-title">Parts used</div>
       <div className="card">
         {parts.map((p, i) => (
-          <div className="grid2" key={i} style={{ alignItems: "end" }}>
+          <div className="part-item" key={i}>
             <div className="field">
               <label>Part</label>
               <input
+                list="part-name-options"
                 value={p.name}
                 onChange={(e) =>
                   setParts((arr) => arr.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
                 }
               />
             </div>
-            <div className="row" style={{ gap: 6 }}>
-              <div className="field" style={{ flex: 1 }}>
+            <div className="grid2">
+              <div className="field">
+                <label>Brand</label>
+                <input
+                  list="part-brand-options"
+                  value={p.brand ?? ""}
+                  placeholder="e.g. Bosch"
+                  onChange={(e) =>
+                    setParts((arr) =>
+                      arr.map((x, j) =>
+                        j === i ? { ...x, brand: e.target.value === "" ? undefined : e.target.value } : x,
+                      ),
+                    )
+                  }
+                />
+              </div>
+              <div className="field">
                 <label>Cost</label>
                 <input
                   type="number"
@@ -307,12 +371,14 @@ export function RecordEditor() {
                   }
                 />
               </div>
+            </div>
+            <div className="row" style={{ justifyContent: "flex-end" }}>
               <button
                 type="button"
                 className="btn btn--sm btn--danger"
                 onClick={() => setParts((arr) => arr.filter((_, j) => j !== i))}
               >
-                ✕
+                ✕ Remove part
               </button>
             </div>
           </div>
@@ -320,6 +386,7 @@ export function RecordEditor() {
         <button
           type="button"
           className="btn btn--sm"
+          style={{ marginTop: parts.length ? 14 : 0 }}
           onClick={() => setParts((arr) => [...arr, { name: "" }])}
         >
           + Add part
